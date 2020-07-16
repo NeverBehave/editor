@@ -39,10 +39,10 @@ export default new Vuex.Store({
       uuid1: { name: 'hello1', position: { x: 15, y: 24 }, outputs: ['uuid3'] }
     },
     connections: {
-      uuid4: {
-        from: 'uuid3',
-        to: 'uuid2'
-      }
+      // uuid4: {
+      //   from: 'uuid3',
+      //   to: 'uuid2'
+      // }
     },
     sockets: {
       uuid2: {
@@ -84,10 +84,19 @@ export default new Vuex.Store({
         y: 0
       },
       selectedNodes: [],
-      selectedSocket: []
+      selectedSocket: null
     }
   },
   mutations: {
+    updateSelectedSocket (state, { uuid }) {
+      state.status.selectedSocket = uuid
+    },
+    updateMouse (state, { position }) {
+      state.status.mouse = {
+        ...state.status.mouse,
+        ...position
+      }
+    },
     updateEditorTransform (state, pair) { // { x, y }
       state.config.transform = {
         ...state.config.transform,
@@ -174,7 +183,13 @@ export default new Vuex.Store({
       return uuid
     },
     async addConnection ({ commit, dispatch }, { from, to, connection }) {
-      const uuid = await dispatch('createConnection', { connection })
+      const uuid = await dispatch('createConnection', {
+        connection: {
+          from,
+          to,
+          ...connection
+        }
+      })
       // update from/to
       commit('addSocketConnection', { uuid: from, connection: uuid })
       commit('addSocketConnection', { uuid: to, connection: uuid })
@@ -219,6 +234,25 @@ export default new Vuex.Store({
         ...n.outputs.map(e => dispatch('removeSocket', e))
       ])
       commit('removeNode', uuid)
+    },
+    async socketClicked ({ getters, commit, dispatch }, { uuid }) {
+      const prevSocket = getters.getSelectedSocket
+      if (prevSocket) {
+        if (prevSocket !== uuid) {
+          const prev = getters.getSocket(prevSocket)
+          const cur = getters.getSocket(uuid)
+          if (prev.ioType !== cur.ioType) {
+            if (prev.ioType === 'input') {
+              dispatch('addConnection', { from: uuid, to: prevSocket })
+            } else {
+              dispatch('addConnection', { from: prevSocket, to: uuid })
+            }
+          }
+        }
+        commit('updateSelectedSocket', { uuid: null })
+      } else {
+        commit('updateSelectedSocket', { uuid })
+      }
     }
   },
   getters: {
@@ -231,6 +265,8 @@ export default new Vuex.Store({
     getScale: (state) => state.config.scale,
     getZoom: (state) => state.status.zoom,
     getDrag: (state) => state.status.drag,
+    getMouse: (state) => state.status.mouse,
+    getSelectedSocket: (state) => state.status.selectedSocket,
     // isTranslating: (state) => state.status.translate,
     getEditorTransform: (state) => state.config.transform,
     getIntensity: (state) => state.config.intensity,

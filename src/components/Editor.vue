@@ -1,12 +1,14 @@
 <template>
     <div :style="editorStyle"
         @pointerdown="handleDown"
+        @pointermove="handleMove"
         @wheel.prevent="handleWheel"
         @dblclick.prevent="handleDoubleClick"
         ref="editor" class="editor-container">
         <div
             :style="graphStyle"
             ref="graph">
+            <Picker />
             <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
             <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
         </div>
@@ -18,6 +20,7 @@ import { mapGetters, mapMutations } from 'vuex'
 import { Common, Zoom, Drag, Resize } from '../mixins'
 import Node from './Node'
 import Link from './Link'
+import Picker from './Picker'
 
 export default {
   props: {},
@@ -28,7 +31,8 @@ export default {
   },
   components: {
     Node,
-    Link
+    Link,
+    Picker
   },
   computed: {
     ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize']),
@@ -71,7 +75,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['updateEditorTransform', 'updateEditorScale']),
+    ...mapMutations(['updateEditorTransform', 'updateEditorScale', 'updateMouse']),
     onZoom (delta, ox, oy) {
       this.zoom(this.getScale * (1 + delta), ox, oy)
     },
@@ -102,6 +106,17 @@ export default {
     },
     handleWheel (e) {
       this.zoomWheel(e)
+    },
+    handleMove (e) {
+      const { clientX, clientY } = e
+      const rect = this.el.getBoundingClientRect()
+      const x = clientX - rect.left
+      const y = clientY - rect.top
+      const k = this.getScale
+
+      this.updateMouse({
+        position: { x: x / k, y: y / k }
+      })
     },
     handleDoubleClick (e) {
       this.zoomDoubleClick(e)

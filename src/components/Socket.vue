@@ -1,18 +1,18 @@
 <template>
 <div :class="socketType" ref="socket">
         <template v-if="socketType === 'input'">
-             <div :title="socket.type" :class="dotClasses" ref="dot"></div>
+             <div :title="socket.type" :class="dotClasses" ref="dot" @click="handleClick"></div>
             <div :class="nameClasses">{{ socket.name }}</div>
         </template>
         <template v-else>
               <div :class="nameClasses">{{ socket.name }}</div>
-            <div :title="socket.type" :class="dotClasses" ref="dot"></div>
+            <div :title="socket.type" :class="dotClasses" ref="dot" @click="handleClick"></div>
         </template>
 </div>
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
 import { isEqual } from 'lodash'
 
 export default {
@@ -51,6 +51,7 @@ export default {
   },
   methods: {
     ...mapMutations(['updateSocket']),
+    ...mapActions(['socketClicked']),
     updatePosition (position) {
       const el = this.$refs.dot
 
@@ -63,6 +64,9 @@ export default {
           }
         }
       })
+    },
+    handleClick () {
+      this.socketClicked({ uuid: this.uuid })
     }
   },
   watch: {

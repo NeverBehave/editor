@@ -1,13 +1,13 @@
 <template>
 <div :style="divStyle">
   <svg :class="svgClasses">
-      <path class="main-path" :d="path" />
+      <path @dblclick.stop="handleDoubleClick" class="main-path" :d="path" />
   </svg>
 </div>
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
 import { isEqual } from 'lodash'
 
 export default {
@@ -50,16 +50,11 @@ export default {
     },
     svgClasses () {
       return ['connection']
-    //   return !connection ? [] : [
-    //     'input-' + toTrainCase(connection.input.name),
-    //     'output-' + toTrainCase(connection.output.name),
-    //     'socket-input-' + toTrainCase(connection.input.socket.name),
-    //     'socket-output-' + toTrainCase(connection.output.socket.name)
-    //   ]
     }
   },
   methods: {
     ...mapMutations(['updateConnection']),
+    ...mapActions(['removeConnection']),
     defaultPath (points, curvature = 0.4) {
       const { x1, y1, x2, y2 } = points
       const hx1 = x1 + Math.abs(x2 - x1) * curvature
@@ -74,6 +69,9 @@ export default {
           path: this.defaultPath(this.points)
         }
       })
+    },
+    handleDoubleClick () {
+      this.removeConnection({ uuid: this.uuid })
     }
   },
   watch: {
