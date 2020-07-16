@@ -1,30 +1,27 @@
 <template>
-  <div :style="editorStyle" class="editor-container"
-          @pointermove="handleMove"
-          @pointerup="handleUp"
-          @pointerdown="handleDown"
-          @pointercancel="handleCancel"
-          @wheel.prevent="handleWheel"
-          @dblclick.prevent="handleDoubleClick">
-    <div
-      :style="graphStyle"
-      ref="graph"
-    >
-      <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
-      <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
+    <div :style="editorStyle"
+        @pointerdown="handleDown"
+        @wheel.prevent="handleWheel"
+        @dblclick.prevent="handleDoubleClick"
+        ref="editor" class="editor-container">
+        <div
+            :style="graphStyle"
+            ref="graph">
+            <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
+            <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
+        </div>
     </div>
-  </div>
 </template>
 
 <script>
 import { mapGetters, mapMutations } from 'vuex'
-import { Common, Zoom, Drag } from '../mixins'
+import { Common, Zoom, Drag, Resize } from '../mixins'
 import Node from './Node'
 import Link from './Link'
 
 export default {
   props: {},
-  mixins: [Common, Zoom, Drag],
+  mixins: [Common, Zoom, Drag, Resize],
   created () {
     this.zoomInit()
     this.dragInit()
@@ -34,7 +31,7 @@ export default {
     Link
   },
   computed: {
-    ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity']),
+    ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize']),
     el () {
       return this.$refs.graph
     },
@@ -62,8 +59,8 @@ export default {
       return {
         ...this.dragStyle,
         overflow: 'hidden',
-        width: '869px',
-        height: '464px'
+        width: `${this.resizeWidth}px`,
+        height: `${this.resizeHeight}px`
       }
     },
     graphStyle () {
@@ -99,26 +96,28 @@ export default {
     onDrag (dx, dy) {
       // @TODO Event
     },
-    handleMove (e) {
-      // this.zoomMove(e)
-      // this.dragMove(e)
-    },
-    handleUp (e) {
-      // this.zoomEnd(e)
-      // this.dragUp(e)
-    },
     handleDown (e) {
       this.zoomDown(e)
       this.dragDown(e)
-    },
-    handleCancel (e) {
-      // this.zoomEnd(e)
     },
     handleWheel (e) {
       this.zoomWheel(e)
     },
     handleDoubleClick (e) {
       this.zoomDoubleClick(e)
+    },
+    resize () {
+      const container = this.$refs.editor
+
+      if (!container.parentElement) { throw new Error('Container doesn\'t have parent element') }
+
+      this.resizeWidth = container.parentElement.clientWidth
+      this.resizeHeight = container.parentElement.clientHeight
+    }
+  },
+  watch: {
+    eventResize () {
+      this.resize()
     }
   }
 }

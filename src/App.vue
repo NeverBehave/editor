@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div>
+    <div style="width: 1000px; height: 300px">
       <Editor />
     </div>
   </div>

@@ -1,8 +1,6 @@
 <template>
     <div  :style="nodeStyle"
             class="node"
-            @pointermove="handleMove"
-            @pointerup="handleUp"
             @pointerdown="handleDown"
             ref="node"
         >
@@ -104,14 +102,8 @@ export default {
       this.transformX = x
       this.transformY = y
     },
-    handleUp (e) {
-      // this.dragUp(e)
-    },
     handleDown (e) {
       this.dragDown(e)
-    },
-    handleMove (e) {
-      // this.dragMove(e)
     }
   }
 }

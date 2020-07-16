@@ -77,6 +77,7 @@ export default new Vuex.Store({
     },
     status: {
       zoom: false,
+      resize: false,
       // translate: false,
       mouse: {
         x: 0,
@@ -155,6 +156,9 @@ export default new Vuex.Store({
     },
     removeSocket (state, { uuid }) {
       Vue.delete(state.sockets, uuid)
+    },
+    emitResize (state) {
+      state.status.resize = !state.status.resize
     }
   },
   actions: {
@@ -229,7 +233,8 @@ export default new Vuex.Store({
     getDrag: (state) => state.status.drag,
     // isTranslating: (state) => state.status.translate,
     getEditorTransform: (state) => state.config.transform,
-    getIntensity: (state) => state.config.intensity
+    getIntensity: (state) => state.config.intensity,
+    eventResize: (state) => state.status.resize
   },
   modules: {}
 })
