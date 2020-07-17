@@ -5,7 +5,7 @@
             ref="node"
         >
         <div class="title">{{ node.name }}</div>
-        <slot></slot> <!-- Control -->
+        <Control v-for="uuid in controls" :key="uuid" :uuid="uuid" />
         <Socket v-for="uuid in inputs" :key="uuid" :uuid="uuid"/>
         <Socket v-for="uuid in outputs" :key="uuid" :uuid="uuid"/>
     </div>
@@ -13,6 +13,7 @@
 
 <script>
 import Socket from './Socket'
+import Control from './Control'
 import { mapGetters, mapMutations } from 'vuex'
 import { Common, Drag } from '../mixins'
 
@@ -22,7 +23,8 @@ export default {
     this.dragInit()
   },
   components: {
-    Socket
+    Socket,
+    Control
   },
   props: {
     uuid: {
@@ -43,6 +45,9 @@ export default {
     },
     outputs () {
       return this.node.outputs
+    },
+    controls () {
+      return this.node.controls
     },
     transformX: {
       get () {

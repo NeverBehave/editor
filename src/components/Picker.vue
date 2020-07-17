@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import PseudoLink from './PseudoLink'
+import PseudoLink from './Pseudo/PseudoLink'
 import { mapGetters, mapMutations } from 'vuex'
 
 export default {

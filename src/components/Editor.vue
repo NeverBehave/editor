@@ -108,6 +108,9 @@ export default {
       this.zoomWheel(e)
     },
     handleMove (e) {
+      this.observeMouseMove(e)
+    },
+    observeMouseMove (e) {
       const { clientX, clientY } = e
       const rect = this.el.getBoundingClientRect()
       const x = clientX - rect.left

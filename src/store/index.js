@@ -4,13 +4,31 @@ import { v4 as uuidv4 } from 'uuid'
 import { cloneDeep } from 'lodash'
 Vue.use(Vuex)
 
+// Structure for component:
 /**
+ * config: {
+      scale: 1,
+      transform: {
+        x: 0,
+        y: 0
+      },
+      intensity: 0.1,
+      components: {
+        uuid:  {
+          type: 'component',
+          controls: []
+          inputs: [{ ...socket {name, type}}],
+          outputs: []
+        }
+      }
+    },
  * nodes: {
  *  uuid: {
  *   name: hello,
  *   inputs: [],
  *   outputs: [],
- *    position: {x: y: }
+ *   controls: [],
+ *   position: {x: y: }
  *  }
  * },
  * sockets: {
@@ -29,51 +47,67 @@ Vue.use(Vuex)
  *   to: uuid
  *   path?: ''
  *  }
+ * },
+ * controls: {
+ *  uuid: {
+ *    parent: uuid,
+ *    name: 'component-name',
+ *    props: { ...data }
+ *  }
+ * },
+ * errors: {
+ *  uuid: {
+ *  parent: uuid,
+ *  message: message
+ * }
  * }
  */
 
+// uuid2: {
+//   name: 'hello',
+//   type: 'string',
+//   parent: 'uuid',
+//   ioType: 'input',
+//   connections: ['uuid4'],
+//   position: {
+//     x: 0, y: 0
+//   }
+// },
+// uuid3: {
+//   name: 'hello',
+//   type: 'string',
+//   parent: 'uuid1',
+//   ioType: 'output',
+//   connections: ['uuid4'],
+//   position: {
+//     x: 0, y: 0
+//   }
+// }
+//   uuid: { name: 'hello', position: { x: 0, y: 0 }, inputs: ['uuid2'] },
+// uuid1: { name: 'hello1', position: { x: 15, y: 24 }, outputs: ['uuid3'] }
+// uuid: { name: 'hello', position: { x: 0, y: 0 }, inputs: ['uuid2'] },
+// uuid1: { name: 'hello1', position: { x: 15, y: 24 }, outputs: ['uuid3'] }
+//  uuid4: {
+//   from: 'uuid3',
+//   to: 'uuid2'
+// }
 export default new Vuex.Store({
   state: {
-    nodes: {
-      uuid: { name: 'hello', position: { x: 0, y: 0 }, inputs: ['uuid2'] },
-      uuid1: { name: 'hello1', position: { x: 15, y: 24 }, outputs: ['uuid3'] }
+    graph: {
+      nodes: {},
+      connections: {},
+      sockets: {},
+      controls: {},
+      errors: {}
     },
-    connections: {
-      // uuid4: {
-      //   from: 'uuid3',
-      //   to: 'uuid2'
-      // }
-    },
-    sockets: {
-      uuid2: {
-        name: 'hello',
-        type: 'string',
-        parent: 'uuid',
-        ioType: 'input',
-        connections: ['uuid4'],
-        position: {
-          x: 0, y: 0
-        }
-      },
-      uuid3: {
-        name: 'hello',
-        type: 'string',
-        parent: 'uuid1',
-        ioType: 'output',
-        connections: ['uuid4'],
-        position: {
-          x: 0, y: 0
-        }
-      }
-    },
-    errors: {},
     config: {
       scale: 1,
       transform: {
         x: 0,
         y: 0
       },
-      intensity: 0.1
+      intensity: 0.1,
+      components: {}
     },
     status: {
       zoom: false,
@@ -84,7 +118,8 @@ export default new Vuex.Store({
         y: 0
       },
       selectedNodes: [],
-      selectedSocket: null
+      selectedSocket: null,
+      pseudo: {}
     }
   },
   mutations: {
@@ -136,6 +171,20 @@ export default new Vuex.Store({
         })
       )
     },
+    updateControl (state, { uuid, control }) {
+      Vue.set(state.controls, uuid, cloneDeep({
+        ...state.controls,
+        ...control
+      }))
+    },
+    updateControlProp (state, { uuid, props }) {
+      if (state.controls[uuid]) {
+        Vue.set(state.controls[uuid], 'props', cloneDeep({
+          ...state.controls[uuid].prop,
+          ...props
+        }))
+      } else { throw new Error('Prop editing on undefined') }
+    },
     addNodeInput (state, { uuid, input }) {
       state.nodes[uuid].inputs.push(input)
     },
@@ -156,6 +205,9 @@ export default new Vuex.Store({
     removeSocketConnection (state, { uuid, connection }) {
       const index = state.sockets[uuid].connections.indexOf(connection)
       index !== -1 && state.sockets[uuid].connections.splice(index, 1)
+    },
+    removeControl (state, { uuid }) {
+      Vue.delete(state.controls, uuid)
     },
     removeNode (state, { uuid }) {
       Vue.delete(state.nodes, uuid)
@@ -233,6 +285,7 @@ export default new Vuex.Store({
         ...n.inputs.map(e => dispatch('removeSocket', e)),
         ...n.outputs.map(e => dispatch('removeSocket', e))
       ])
+      n.controls.forEach(e => commit('removeControl', { uuid: e }))
       commit('removeNode', uuid)
     },
     async socketClicked ({ getters, commit, dispatch }, { uuid }) {
@@ -262,11 +315,14 @@ export default new Vuex.Store({
     getSockets: (state) => state.sockets,
     getNode: (state) => (uuid) => state.nodes[uuid],
     getNodes: (state) => state.nodes,
+    getControl: (state) => (uuid) => state.controls[uuid],
     getScale: (state) => state.config.scale,
     getZoom: (state) => state.status.zoom,
     getDrag: (state) => state.status.drag,
     getMouse: (state) => state.status.mouse,
     getSelectedSocket: (state) => state.status.selectedSocket,
+    getComponents: (state) => state.config.components,
+    getComponent: (state) => (uuid) => state.config.components[uuid],
     // isTranslating: (state) => state.status.translate,
     getEditorTransform: (state) => state.config.transform,
     getIntensity: (state) => state.config.intensity,
