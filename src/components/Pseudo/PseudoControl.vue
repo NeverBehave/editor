@@ -12,10 +12,10 @@ export default {
   },
   computed: {
     controlType () {
-      return this.control.name
+      return this.control.type
     },
     controlProps () {
-      return this.control.props
+      return this.control.data
     }
   }
 }

@@ -1,9 +1,10 @@
 <template>
-    <component :is="controlType" :data.sync="controlProps"/>
+    <component :is="controlType" :data.sync="nodeData" />
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import vuex from 'vuex'
+const { mapGetters, mapMutations } = vuex
 
 export default {
   props: {
@@ -13,22 +14,31 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getControl']),
+    ...mapGetters(['getControl', 'getNode']),
     control () {
       return this.getControl(this.uuid)
     },
-    controlType () {
-      return this.control.name
+    nodeId () {
+      return this.control.parent
     },
-    controlProps: {
-      get () { return this.control.props },
+    node () {
+      return this.getNode(this.nodeId)
+    },
+    controlType () {
+      return this.control.type
+    },
+    nodeData: {
+      get () { return this.node.data },
       set (v) {
-        this.updateControlProp({ uuid: this.uuid, props: v })
+        this.updateNodeData({ uuid: this.nodeId, data: v })
       }
     }
   },
   methods: {
-    ...mapMutations(['updateControlProp'])
+    ...mapMutations(['updateNodeData'])
+  },
+  provide: {
+    $editor: vuex
   }
 }
 </script>

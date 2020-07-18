@@ -4,6 +4,17 @@ import { v4 as uuidv4 } from 'uuid'
 import { cloneDeep } from 'lodash'
 Vue.use(Vuex)
 
+const newNode = () => {
+  return {
+    name: '',
+    type: '',
+    inputs: [],
+    outputs: [],
+    controls: [],
+    data: {},
+    position: { x: 0, y: 0 }
+  }
+}
 // Structure for component:
 /**
  * config: {
@@ -15,8 +26,9 @@ Vue.use(Vuex)
       intensity: 0.1,
       components: {
         uuid:  {
+          name: 'default name',
           type: 'component',
-          controls: []
+          controls: [{ type, data }], // data here are actually used for init, the rest of the time, data should fetch directly from node.
           inputs: [{ ...socket {name, type}}],
           outputs: []
         }
@@ -25,9 +37,11 @@ Vue.use(Vuex)
  * nodes: {
  *  uuid: {
  *   name: hello,
+ *   type: 'component_name',
  *   inputs: [],
  *   outputs: [],
  *   controls: [],
+ *   data: {},
  *   position: {x: y: }
  *  }
  * },
@@ -51,8 +65,7 @@ Vue.use(Vuex)
  * controls: {
  *  uuid: {
  *    parent: uuid,
- *    name: 'component-name',
- *    props: { ...data }
+ *    name: 'component-name'
  *  }
  * },
  * errors: {
@@ -107,7 +120,15 @@ export default new Vuex.Store({
         y: 0
       },
       intensity: 0.1,
-      components: {}
+      components: {
+        uuid: {
+          name: 'input node',
+          type: 'input node',
+          controls: [{ type: 'controlInput', data: { hello: 'world' } }],
+          inputs: [{ name: 'test', type: 'string' }],
+          outputs: []
+        }
+      }
     },
     status: {
       zoom: false,
@@ -143,89 +164,122 @@ export default new Vuex.Store({
     },
     updateNode (state, { uuid, node }) {
       Vue.set(
-        state.nodes,
+        state.graph.nodes,
         uuid,
         cloneDeep({
-          ...state.nodes[uuid],
+          ...state.graph.nodes[uuid],
           ...node
         })
       )
     },
+    updateNodeData (state, { uuid, data }) {
+      if (state.graph.nodes[uuid]) {
+        Vue.set(state.graph.nodes[uuid], 'data', cloneDeep({
+          ...state.graph.nodes[uuid].data,
+          ...data
+        }))
+      } else { throw new Error('Unable to update undefined data') }
+    },
     updateConnection (state, { uuid, connection }) {
       Vue.set(
-        state.connections,
+        state.graph.connections,
         uuid,
         cloneDeep({
-          ...state.connections[uuid],
+          ...state.graph.connections[uuid],
           ...connection
         })
       )
     },
     updateSocket (state, { uuid, socket }) {
       Vue.set(
-        state.sockets,
+        state.graph.sockets,
         uuid,
         cloneDeep({
-          ...state.sockets[uuid],
+          ...state.graph.sockets[uuid],
           ...socket
         })
       )
     },
     updateControl (state, { uuid, control }) {
-      Vue.set(state.controls, uuid, cloneDeep({
-        ...state.controls,
+      Vue.set(state.graph.controls, uuid, cloneDeep({
+        ...state.graph.controls[uuid],
         ...control
       }))
     },
-    updateControlProp (state, { uuid, props }) {
-      if (state.controls[uuid]) {
-        Vue.set(state.controls[uuid], 'props', cloneDeep({
-          ...state.controls[uuid].prop,
-          ...props
-        }))
-      } else { throw new Error('Prop editing on undefined') }
-    },
     addNodeInput (state, { uuid, input }) {
-      state.nodes[uuid].inputs.push(input)
+      state.graph.nodes[uuid].inputs.push(input)
     },
     addNodeOutput (state, { uuid, output }) {
-      state.nodes[uuid].outputs.push(output)
+      state.graph.nodes[uuid].outputs.push(output)
+    },
+    addNodeControl (state, { uuid, control }) {
+      state.graph.nodes[uuid].controls.push(control)
     },
     addSocketConnection (state, { uuid, connection }) {
-      state.sockets[uuid].connections.push(connection)
+      state.graph.sockets[uuid].connections.push(connection)
     },
     removeNodeInput (state, { uuid, input }) {
-      const index = state.nodes[uuid].inputs.indexOf(input)
-      index !== -1 && state.nodes[uuid].inputs.splice(index, 1)
+      const index = state.graph.nodes[uuid].inputs.indexOf(input)
+      index !== -1 && state.graph.nodes[uuid].inputs.splice(index, 1)
     },
     removeNodeOutput (state, { uuid, output }) {
-      const index = state.nodes[uuid].outputs.indexOf(output)
-      index !== -1 && state.nodes[uuid].outputs.splice(index, 1)
+      const index = state.graph.nodes[uuid].outputs.indexOf(output)
+      index !== -1 && state.graph.nodes[uuid].outputs.splice(index, 1)
     },
     removeSocketConnection (state, { uuid, connection }) {
-      const index = state.sockets[uuid].connections.indexOf(connection)
-      index !== -1 && state.sockets[uuid].connections.splice(index, 1)
+      const index = state.graph.sockets[uuid].connections.indexOf(connection)
+      index !== -1 && state.graph.sockets[uuid].connections.splice(index, 1)
+    },
+    removeNodeControl (state, { uuid, control }) {
+      const index = state.graph.sockets[uuid].controls.indexOf(control)
+      index !== -1 && state.graph.sockets[uuid].controls.splice(index, 1)
     },
     removeControl (state, { uuid }) {
-      Vue.delete(state.controls, uuid)
+      Vue.delete(state.graph.controls, uuid)
     },
     removeNode (state, { uuid }) {
-      Vue.delete(state.nodes, uuid)
+      Vue.delete(state.graph.nodes, uuid)
     },
     removeConnection (state, { uuid }) {
-      Vue.delete(state.connections, uuid)
+      Vue.delete(state.graph.connections, uuid)
     },
     removeSocket (state, { uuid }) {
-      Vue.delete(state.sockets, uuid)
+      Vue.delete(state.graph.sockets, uuid)
     },
     emitResize (state) {
       state.status.resize = !state.status.resize
     }
   },
   actions: {
+    async addNodeFromComponent ({ dispatch, getters }, { component, position = { x: 0, y: 0 } }) {
+      const com = typeof component === 'string' ? getters.getComponent(component) : component
+      if (com) {
+        const nodeId = await dispatch('addNode', {
+          node: {
+            ...newNode(),
+            type: com.type,
+            position
+          }
+        })
+
+        com.inputs.forEach(e => dispatch('addNodeInput', { uuid: nodeId, input: e }))
+        com.outputs.forEach(e => dispatch('addNodeOutput', { uuid: nodeId, output: e }))
+        com.controls.forEach(e => dispatch('addNodeControl', { uuid: nodeId, control: e }))
+
+        return nodeId
+      }
+
+      return false
+    },
     async addNode ({ commit }, { node }) {
       const uuid = uuidv4()
       commit('updateNode', { uuid, node })
+
+      return uuid
+    },
+    async addControl ({ commit }, { control }) {
+      const uuid = uuidv4()
+      commit('updateControl', { uuid, control })
 
       return uuid
     },
@@ -256,7 +310,7 @@ export default new Vuex.Store({
     async addNodeInput ({ commit, dispatch }, { uuid, input }) {
       const i = { ...input, parent: uuid, ioType: 'input' }
       const sid = await dispatch('createSocket', { socket: i })
-      commit('addNodeInput', { uuid, sid })
+      commit('addNodeInput', { uuid, input: sid })
 
       return sid
     },
@@ -266,6 +320,16 @@ export default new Vuex.Store({
       commit('addNodeOutput', { uuid, sid })
 
       return sid
+    },
+    async addNodeControl ({ dispatch, commit }, { uuid, control }) {
+      const { type, data } = control
+      const c = { type, parent: uuid }
+      // mix data field into node data field
+      const cid = await dispatch('addControl', { control: c })
+      commit('updateNodeData', { uuid, data })
+      commit('addNodeControl', { uuid, control: cid })
+
+      return cid
     },
     async removeConnection ({ getters, commit }, { uuid }) {
       const conn = getters.getConnection(uuid)
@@ -309,13 +373,13 @@ export default new Vuex.Store({
     }
   },
   getters: {
-    getConnection: (state) => (uuid) => state.connections[uuid],
-    getConnections: (state) => state.connections,
-    getSocket: (state) => (uuid) => state.sockets[uuid],
-    getSockets: (state) => state.sockets,
-    getNode: (state) => (uuid) => state.nodes[uuid],
-    getNodes: (state) => state.nodes,
-    getControl: (state) => (uuid) => state.controls[uuid],
+    getConnection: (state) => (uuid) => state.graph.connections[uuid],
+    getConnections: (state) => state.graph.connections,
+    getSocket: (state) => (uuid) => state.graph.sockets[uuid],
+    getSockets: (state) => state.graph.sockets,
+    getNode: (state) => (uuid) => state.graph.nodes[uuid],
+    getNodes: (state) => state.graph.nodes,
+    getControl: (state) => (uuid) => state.graph.controls[uuid],
     getScale: (state) => state.config.scale,
     getZoom: (state) => state.status.zoom,
     getDrag: (state) => state.status.drag,

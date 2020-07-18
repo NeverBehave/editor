@@ -1,6 +1,6 @@
 <template>
     <div class="dock-menu">
-        <DockItem v-for="uuid in getComponents" :key="uuid" :uuid="uuid" />
+        <DockItem v-for="(value, uuid) in getComponents" :key="uuid" :uuid="uuid" />
     </div>
 </template>
 

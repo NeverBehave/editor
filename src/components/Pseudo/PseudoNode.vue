@@ -1,10 +1,10 @@
 <template>
-    <div  :style="nodeStyle"
-            class="node"
+    <div class="node"
             ref="node"
         >
         <div class="title">{{ node.name }}</div>
-        <PseudoControl v-for="item in controls" :key="item.name" :control="item" />
+        <div class="subtitle">{{ node.type }}</div>
+        <PseudoControl v-for="item in controls" :key="item.type" :control="item" />
         <PseudoSocket v-for="item in inputs" :key="item.name" :socket="item" :type="`input`"/>
         <PseudoSocket v-for="item in outputs" :key="item.name" :socket="item" :type="`output`"/>
     </div>

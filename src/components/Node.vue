@@ -5,6 +5,7 @@
             ref="node"
         >
         <div class="title">{{ node.name }}</div>
+        <div class="subtitle">{{ node.type }}</div>
         <Control v-for="uuid in controls" :key="uuid" :uuid="uuid" />
         <Socket v-for="uuid in inputs" :key="uuid" :uuid="uuid"/>
         <Socket v-for="uuid in outputs" :key="uuid" :uuid="uuid"/>

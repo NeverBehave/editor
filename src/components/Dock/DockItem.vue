@@ -1,11 +1,11 @@
 <template>
-    <div class="dock-item">
-      <PseudoNode :node="component"/>
+    <div class="dock-item" @click="handleClick">
+      <PseudoNode :node="component" />
     </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import PseudoNode from '../Pseudo/PseudoNode'
 
 export default {
@@ -22,6 +22,12 @@ export default {
     ...mapGetters(['getComponent']),
     component () {
       return this.getComponent(this.uuid)
+    }
+  },
+  methods: {
+    ...mapActions(['addNodeFromComponent']),
+    handleClick () {
+      this.addNodeFromComponent({ component: this.uuid })
     }
   }
 }

@@ -12,12 +12,14 @@
             <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
             <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
         </div>
+        <Dock/>
     </div>
 </template>
 
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import { Common, Zoom, Drag, Resize } from '../mixins'
+import Dock from './Dock/Dock'
 import Node from './Node'
 import Link from './Link'
 import Picker from './Picker'
@@ -32,7 +34,8 @@ export default {
   components: {
     Node,
     Link,
-    Picker
+    Picker,
+    Dock
   },
   computed: {
     ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize']),
