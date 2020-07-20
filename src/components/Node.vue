@@ -2,13 +2,14 @@
     <div  :style="nodeStyle"
             class="node"
             @pointerdown="handleDown"
+            @contextmenu.stop.prevent="handleContextMenu"
             ref="node"
         >
         <div class="title">{{ node.name }}</div>
         <div class="subtitle">{{ node.type }}</div>
+        <Socket v-for="uuid in outputs" :key="uuid" :uuid="uuid"/>
         <Control v-for="uuid in controls" :key="uuid" :uuid="uuid" />
         <Socket v-for="uuid in inputs" :key="uuid" :uuid="uuid"/>
-        <Socket v-for="uuid in outputs" :key="uuid" :uuid="uuid"/>
     </div>
 </template>
 
@@ -110,6 +111,9 @@ export default {
     },
     handleDown (e) {
       this.dragDown(e)
+    },
+    handleContextMenu (e) {
+      console.log(e)
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-    <component :is="controlType" :data.sync="nodeData" />
+    <component :is="controlType" :data.sync="nodeData" :uuid="uuid" />
 </template>
 
 <script>
@@ -37,8 +37,10 @@ export default {
   methods: {
     ...mapMutations(['updateNodeData'])
   },
-  provide: {
-    $editor: vuex
+  provide () {
+    return {
+      $editor: this.$store
+    }
   }
 }
 </script>

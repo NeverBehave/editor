@@ -37,64 +37,55 @@ export default {
     Picker
   },
   computed: {
-    ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize']),
+    ...mapGetters(['getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize', 'getEditorSize']),
     el () {
       return this.$refs.graph
     },
-    transformX: {
-      get () {
-        return this.getEditorTransform.x
-      },
-      set (x) {
-        this.updateEditorTransform({
-          x
-        })
-      }
+    transformX () {
+      return this.getEditorTransform.x
     },
-    transformY: {
-      get () {
-        return this.getEditorTransform.y
-      },
-      set (y) {
-        this.updateEditorTransform({
-          y
-        })
-      }
+    transformY () {
+      return this.getEditorTransform.y
+    },
+    scale () {
+      return this.getEditorTransform.scale
     },
     editorStyle () {
       return {
         ...this.dragStyle,
         overflow: 'hidden',
-        width: `${this.resizeWidth}px`,
-        height: `${this.resizeHeight}px`
+        width: `${this.editorWidth}px`,
+        height: `${this.editorHeight}px`
       }
     },
     graphStyle () {
       return {
         'transform-origin': '0px 0px 0px',
-        transform: `translate(${this.getEditorTransform.x}px, ${this.getEditorTransform.y}px) scale(${this.getScale})`
+        transform: `translate(${this.transformX}px, ${this.transformY}px) scale(${this.scale})`
       }
+    },
+    editorHeight () {
+      return this.getEditorSize.height
+    },
+    editorWidth () {
+      return this.getEditorSize.width
     }
   },
   methods: {
-    ...mapMutations(['updateEditorTransform', 'updateEditorScale', 'updateMouse']),
-    ...mapActions(['addNodeFromComponent']),
+    ...mapMutations(['updateEditorScale', 'updateMouse', 'updateEditorSize']),
+    ...mapActions(['addNodeFromComponent', 'updateEditorZoom', 'updateEditorTranslate']),
     onZoom (delta, ox, oy) {
-      this.zoom(this.getScale * (1 + delta), ox, oy)
-    },
-    zoom (zoom, ox = 0, oy = 0) { // @TODO source: touch/mouse
-      const k = this.getScale
-
-      // @TODO event zoom
-      const d = (k - zoom) / ((k - zoom) || 1)
-
-      this.updateEditorScale({ scale: zoom })
-      this.transformX += ox * d
-      this.transformY += oy * d
+      this.updateEditorZoom({
+        x: ox,
+        y: oy,
+        scale: this.scale * (1 + delta)
+      })
     },
     translate (x, y) {
-      this.transformX = x
-      this.transformY = y
+      this.updateEditorTransform({
+        x,
+        y
+      })
     },
     onTranslate (dx, dy) {
       if (this.zoomTranslating) return // lock translation while zoom on multitouch
@@ -118,7 +109,7 @@ export default {
       const rect = this.el.getBoundingClientRect()
       const x = clientX - rect.left
       const y = clientY - rect.top
-      const k = this.getScale
+      const k = this.scale
 
       this.updateMouse({
         position: { x: x / k, y: y / k }
@@ -140,8 +131,12 @@ export default {
 
       if (!container.parentElement) { throw new Error('Container doesn\'t have parent element') }
 
-      this.resizeWidth = container.parentElement.clientWidth
-      this.resizeHeight = container.parentElement.clientHeight
+      this.updateEditorSize({
+        size: {
+          width: container.parentElement.clientWidth,
+          height: container.parentElement.clientHeight
+        }
+      })
     }
   },
   watch: {
