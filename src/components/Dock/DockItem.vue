@@ -1,5 +1,5 @@
 <template>
-    <div class="dock-item" @click="handleClick">
+    <div class="dock-item" @click="handleClick" draggable="true" @dragstart="handleDragStart">
       <PseudoNode :node="component" />
     </div>
 </template>
@@ -28,6 +28,10 @@ export default {
     ...mapActions(['addNodeFromComponent']),
     handleClick () {
       this.addNodeFromComponent({ component: this.uuid })
+    },
+    handleDragStart (e) {
+      if (!e.dataTransfer) return
+      e.dataTransfer.setData('componentId', this.uuid)
     }
   }
 }

@@ -4,6 +4,8 @@
         @pointermove="handleMove"
         @wheel.prevent="handleWheel"
         @dblclick.prevent="handleDoubleClick"
+        @dragover.prevent
+        @drop="handleDrop"
         ref="editor" class="editor-container">
         <div
             :style="graphStyle"
@@ -12,14 +14,12 @@
             <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
             <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
         </div>
-        <Dock/>
     </div>
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
 import { Common, Zoom, Drag, Resize } from '../mixins'
-import Dock from './Dock/Dock'
 import Node from './Node'
 import Link from './Link'
 import Picker from './Picker'
@@ -34,8 +34,7 @@ export default {
   components: {
     Node,
     Link,
-    Picker,
-    Dock
+    Picker
   },
   computed: {
     ...mapGetters(['getScale', 'getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize']),
@@ -79,6 +78,7 @@ export default {
   },
   methods: {
     ...mapMutations(['updateEditorTransform', 'updateEditorScale', 'updateMouse']),
+    ...mapActions(['addNodeFromComponent']),
     onZoom (delta, ox, oy) {
       this.zoom(this.getScale * (1 + delta), ox, oy)
     },
@@ -126,6 +126,14 @@ export default {
     },
     handleDoubleClick (e) {
       this.zoomDoubleClick(e)
+    },
+    handleDrop (e) {
+      if (!e.dataTransfer) return
+      const uuid = e.dataTransfer.getData('componentId')
+      if (uuid) {
+        this.observeMouseMove(e) // Update mouse position
+        this.addNodeFromComponent({ component: uuid, followMouse: true })
+      }
     },
     resize () {
       const container = this.$refs.editor

@@ -251,14 +251,14 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async addNodeFromComponent ({ dispatch, getters }, { component, position = { x: 0, y: 0 } }) {
+    async addNodeFromComponent ({ dispatch, getters }, { component, position = { x: 0, y: 0 }, followMouse = false }) {
       const com = typeof component === 'string' ? getters.getComponent(component) : component
       if (com) {
         const nodeId = await dispatch('addNode', {
           node: {
             ...newNode(),
             type: com.type,
-            position
+            position: followMouse ? getters.getMouse : position
           }
         })
 
