@@ -107,13 +107,13 @@ export default {
   async removeNode ({ getters, commit, dispatch }, { uuid }) {
     const n = getters.getNode(uuid)
     commit('removeNode', { uuid })
+    n.controls.forEach(e => commit('removeControl', { uuid: e }))
     await Promise.all([
       ...n.inputs.map(e => dispatch('removeSocket', { uuid: e })),
       ...n.outputs.map(e => dispatch('removeSocket', { uuid: e }))
     ])
-    n.controls.forEach(e => commit('removeControl', { uuid: e }))
   },
-  async cloneNode ({ getters, commit, dispatch }, { uuid, position = { x: 0, y: 0 } }) {
+  async cloneNode ({ getters, dispatch }, { uuid, position = { x: 0, y: 0 } }) {
     const n = getters.getNode(uuid)
 
     const nodeId = await dispatch('addNode', {
@@ -130,7 +130,7 @@ export default {
       ...n.inputs.map(e => dispatch('addNodeInput', {
         uuid: nodeId,
         input: {
-          ...e,
+          ...getters.getSocket(e),
           connections: [],
           position: null
         }
@@ -138,13 +138,13 @@ export default {
       ...n.outputs.map(e => dispatch('addNodeOutput', {
         uuid: nodeId,
         output: {
-          ...e,
+          ...getters.getSocket(e),
           connections: [],
           position: null
         }
       }))
     ])
-    n.controls.forEach(e => commit('addNodeControl', { uuid: nodeId, control: e }))
+    n.controls.forEach(e => dispatch('addNodeControl', { uuid: nodeId, control: getters.getControl(e) }))
 
     return nodeId
   },

@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     ...mapMutations(['updateEditorScale', 'updateMouse', 'updateEditorSize', 'emitClick']),
-    ...mapActions(['addNodeFromComponent', 'updateEditorZoom', 'updateEditorTranslate']),
+    ...mapActions(['addNodeFromComponent', 'updateEditorZoom', 'updateEditorTransform']),
     onZoom (delta, ox, oy) {
       this.updateEditorZoom({
         x: ox,

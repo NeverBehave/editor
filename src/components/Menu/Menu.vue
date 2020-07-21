@@ -48,6 +48,7 @@ export default {
         position: 'fixed',
         padding: '10px',
         width: '120px',
+        'margin-left': '-60px',
         top: this.location.y + 'px',
         left: this.location.x + 'px'
       }
