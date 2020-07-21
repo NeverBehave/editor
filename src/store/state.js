@@ -32,6 +32,7 @@ export default {
   status: {
     zoom: false,
     resize: false,
+    click: null,
     mouse: {
       x: 0,
       y: 0
@@ -39,6 +40,12 @@ export default {
     size: {
       height: 0,
       width: 0
+    },
+    contextMenu: {
+      type: null,
+      uuid: null,
+      x: 0,
+      y: 0
     },
     selectedNodes: [],
     selectedSocket: null

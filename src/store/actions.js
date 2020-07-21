@@ -14,32 +14,17 @@ const newNode = () => {
 
 const newSocket = () => {
   return {
-    connections: []
+    name: 'hello',
+    type: 'unknown',
+    parent: 'uuid',
+    ioType: 'unknown',
+    connections: [],
+    position: { x: 0, y: 0 }
   }
 }
 
 export default {
-  async addNodeFromComponent ({ dispatch, getters }, { component, position = { x: 0, y: 0 }, followMouse = false }) {
-    const com = typeof component === 'string' ? getters.getComponent(component) : component
-    if (com) {
-      const nodeId = await dispatch('addNode', {
-        node: {
-          ...newNode(),
-          type: com.type,
-          name: com.name,
-          position: followMouse ? getters.getMouse : position
-        }
-      })
-
-      com.inputs.forEach(e => dispatch('addNodeInput', { uuid: nodeId, input: e }))
-      com.outputs.forEach(e => dispatch('addNodeOutput', { uuid: nodeId, output: e }))
-      com.controls.forEach(e => dispatch('addNodeControl', { uuid: nodeId, control: e }))
-
-      return nodeId
-    }
-
-    return false
-  },
+  // Helpers
   async addNode ({ commit }, { node }) {
     const uuid = uuidv4()
     commit('updateNode', { uuid, node })
@@ -57,6 +42,18 @@ export default {
     commit('updateConnection', { uuid, connection })
     return uuid
   },
+  async createSocket ({ commit }, { socket }) {
+    const uuid = uuidv4()
+    commit('updateSocket', {
+      uuid,
+      socket: {
+        ...newSocket(),
+        ...socket
+      }
+    })
+    return uuid
+  },
+  // Main Methods
   async addConnection ({ commit, dispatch }, { from, to, connection }) {
     const uuid = await dispatch('createConnection', {
       connection: {
@@ -69,17 +66,6 @@ export default {
     commit('addSocketConnection', { uuid: from, connection: uuid })
     commit('addSocketConnection', { uuid: to, connection: uuid })
 
-    return uuid
-  },
-  async createSocket ({ commit }, { socket }) {
-    const uuid = uuidv4()
-    commit('updateSocket', {
-      uuid,
-      socket: {
-        ...newSocket(),
-        ...socket
-      }
-    })
     return uuid
   },
   async addNodeInput ({ commit, dispatch }, { uuid, input }) {
@@ -120,12 +106,47 @@ export default {
   },
   async removeNode ({ getters, commit, dispatch }, { uuid }) {
     const n = getters.getNode(uuid)
+    commit('removeNode', { uuid })
     await Promise.all([
-      ...n.inputs.map(e => dispatch('removeSocket', e)),
-      ...n.outputs.map(e => dispatch('removeSocket', e))
+      ...n.inputs.map(e => dispatch('removeSocket', { uuid: e })),
+      ...n.outputs.map(e => dispatch('removeSocket', { uuid: e }))
     ])
     n.controls.forEach(e => commit('removeControl', { uuid: e }))
-    commit('removeNode', uuid)
+  },
+  async cloneNode ({ getters, commit, dispatch }, { uuid, position = { x: 0, y: 0 } }) {
+    const n = getters.getNode(uuid)
+
+    const nodeId = await dispatch('addNode', {
+      node: {
+        ...n,
+        inputs: [],
+        outputs: [],
+        controls: [],
+        position
+      }
+    })
+
+    await Promise.all([
+      ...n.inputs.map(e => dispatch('addNodeInput', {
+        uuid: nodeId,
+        input: {
+          ...e,
+          connections: [],
+          position: null
+        }
+      })),
+      ...n.outputs.map(e => dispatch('addNodeOutput', {
+        uuid: nodeId,
+        output: {
+          ...e,
+          connections: [],
+          position: null
+        }
+      }))
+    ])
+    n.controls.forEach(e => commit('addNodeControl', { uuid: nodeId, control: e }))
+
+    return nodeId
   },
   async socketClicked ({ getters, commit, dispatch }, { uuid }) {
     const prevSocket = getters.getSelectedSocket
@@ -171,6 +192,34 @@ export default {
 
     commit('updateEditorTransform', {
       x: updatedX, y: updatedY
+    })
+  },
+  async addNodeFromComponent ({ dispatch, getters }, { component, position = { x: 0, y: 0 }, followMouse = false }) {
+    const com = typeof component === 'string' ? getters.getComponent(component) : component
+    if (com) {
+      const nodeId = await dispatch('addNode', {
+        node: {
+          ...newNode(),
+          type: com.type,
+          name: com.name,
+          position: followMouse ? getters.getMouse : position
+        }
+      })
+
+      com.inputs.forEach(e => dispatch('addNodeInput', { uuid: nodeId, input: e }))
+      com.outputs.forEach(e => dispatch('addNodeOutput', { uuid: nodeId, output: e }))
+      com.controls.forEach(e => dispatch('addNodeControl', { uuid: nodeId, control: e }))
+
+      return nodeId
+    }
+
+    return false
+  },
+  // Events
+  async emitContextMenu ({ commit, getters }, { type, uuid }) {
+    const { x, y } = getters.getMouse
+    commit('emitContextMenu', {
+      type, uuid, x, y
     })
   }
 }

@@ -117,7 +117,9 @@ export default new Vuex.Store({
     getIntensity: (state) => state.config.intensity,
     eventResize: (state) => state.status.resize,
     getMaxTransform: (state) => state.config.maxTransform,
-    getEditorSize: (state) => state.status.size
+    getEditorSize: (state) => state.status.size,
+    eventContextMenu: (state) => state.status.contextMenu,
+    eventClick: (state) => state.status.click
   },
   modules: {}
 })

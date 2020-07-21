@@ -107,7 +107,17 @@ export default {
   removeSocket (state, { uuid }) {
     Vue.delete(state.graph.sockets, uuid)
   },
+  // Events
   emitResize (state) {
     state.status.resize = !state.status.resize
+  },
+  emitClick (state, { event }) {
+    state.status.click = event
+  },
+  emitContextMenu (state, payload) { // type, uuid, x, y
+    state.status.contextMenu = {
+      ...state.status.contextMenu,
+      ...payload
+    }
   }
 }

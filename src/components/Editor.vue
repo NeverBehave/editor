@@ -6,6 +6,7 @@
         @dblclick.prevent="handleDoubleClick"
         @dragover.prevent
         @drop="handleDrop"
+        @click="handleClick"
         ref="editor" class="editor-container">
         <div
             :style="graphStyle"
@@ -14,6 +15,7 @@
             <Node v-for="(node, uuid) in getNodes" :key="uuid" :uuid="uuid" />
             <Link v-for="(connection, uuid) in getConnections" :key="uuid" :uuid="uuid" />
         </div>
+        <ContextMenu />
     </div>
 </template>
 
@@ -23,6 +25,7 @@ import { Common, Zoom, Drag, Resize } from '../mixins'
 import Node from './Node'
 import Link from './Link'
 import Picker from './Picker'
+import ContextMenu from './Menu/Menu'
 
 export default {
   props: {},
@@ -34,7 +37,8 @@ export default {
   components: {
     Node,
     Link,
-    Picker
+    Picker,
+    ContextMenu
   },
   computed: {
     ...mapGetters(['getEditorTransform', 'getNodes', 'getConnections', 'getIntensity', 'eventResize', 'getEditorSize']),
@@ -72,7 +76,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['updateEditorScale', 'updateMouse', 'updateEditorSize']),
+    ...mapMutations(['updateEditorScale', 'updateMouse', 'updateEditorSize', 'emitClick']),
     ...mapActions(['addNodeFromComponent', 'updateEditorZoom', 'updateEditorTranslate']),
     onZoom (delta, ox, oy) {
       this.updateEditorZoom({
@@ -114,6 +118,9 @@ export default {
       this.updateMouse({
         position: { x: x / k, y: y / k }
       })
+    },
+    handleClick (e) {
+      this.emitClick({ event: e })
     },
     handleDoubleClick (e) {
       this.zoomDoubleClick(e)

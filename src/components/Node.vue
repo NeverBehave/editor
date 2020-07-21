@@ -16,7 +16,7 @@
 <script>
 import Socket from './Socket'
 import Control from './Control'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapActions } from 'vuex'
 import { Common, Drag } from '../mixins'
 
 export default {
@@ -92,6 +92,7 @@ export default {
   },
   methods: {
     ...mapMutations(['updateNode']),
+    ...mapActions(['emitContextMenu']),
     onDrag (dx, dy) {
       // @TODO Event
     },
@@ -113,7 +114,10 @@ export default {
       this.dragDown(e)
     },
     handleContextMenu (e) {
-      console.log(e)
+      this.emitContextMenu({
+        type: 'node',
+        uuid: this.uuid
+      })
     }
   }
 }
